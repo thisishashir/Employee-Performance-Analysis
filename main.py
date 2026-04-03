@@ -14,31 +14,30 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 ## 2. LOAD DATA
 
-df = pd.read_csv('/content/HR_Analytics.csv')
+# IMPORTANT: change path for deployment
+df = pd.read_csv('HR_Analytics.csv')
 
 print("Dataset Preview:")
 print(df.head())
 
 ## 3. DATA CLEANING
 
-# Remove unnecessary columns
 df.drop([
-        'EmpID', 'EmployeeCount', 'EmployeeNumber',
-            'Over18', 'StandardHours'
+    'EmpID', 'EmployeeCount', 'EmployeeNumber',
+    'Over18', 'StandardHours'
 ], axis=1, inplace=True, errors='ignore')
 
-# Remove missing values
 df = df.dropna()
 
 ## 4. PERFORMANCE ANALYSIS
 
-# Create Performance Score
+# FIXED ERROR HERE (removed `4`)
 df['Performance_Score'] = (
-        df['PerformanceRating'] * 0.4 +
-            df['JobInvolvement'] * 0.2 +
-                df['JobSatisfaction'] * 0.2 +
-                    df['WorkLifeBalance'] * 0.2
-)4
+    df['PerformanceRating'] * 0.4 +
+    df['JobInvolvement'] * 0.2 +
+    df['JobSatisfaction'] * 0.2 +
+    df['WorkLifeBalance'] * 0.2
+)
 
 # Categorize performance
 def categorize(score):
@@ -68,8 +67,6 @@ df['Salary'] = df['MonthlyIncome']
 
 ## 6. OUTLIER DETECTION
 
-# Using IQR method (simple and important for viva)
-
 Q1 = df['Salary'].quantile(0.25)
 Q3 = df['Salary'].quantile(0.75)
 
@@ -78,15 +75,14 @@ IQR = Q3 - Q1
 lower_bound = Q1 - 1.5 * IQR
 upper_bound = Q3 + 1.5 * IQR
 
-# Identify outliers
 df['Outlier'] = df['Salary'].apply(
-            lambda x: True if (x < lower_bound or x > upper_bound) else False
+    lambda x: True if (x < lower_bound or x > upper_bound) else False
 )
 
 print("\nOutliers Detected:")
 print(df['Outlier'].value_counts())
 
-### Box Plot of Salary Before Outlier Handling
+## 7. HANDLE OUTLIERS
 
 plt.figure(figsize=(10, 6))
 sns.boxplot(x=df['Salary'])
@@ -94,20 +90,10 @@ plt.title('Salary Distribution Before Outlier Handling')
 plt.xlabel('Salary')
 plt.show()
 
-### Box Plot of Salary After Outlier Handling
-
-## 7. HANDLE OUTLIERS
-
 # Remove outliers
 df = df[df['Outlier'] == False]
 
 print("\nDataset shape after removing outliers:", df.shape)
-
-# Graph After Handeling the Outliers
-
-# **# This is formatted as code**
-
-# **bold text**
 
 plt.figure(figsize=(10, 6))
 sns.boxplot(x=df['Salary'])
@@ -117,14 +103,12 @@ plt.show()
 
 ## 8. DATA PREPARATION
 
-# Encode categorical variables
 le = LabelEncoder()
 for col in df.select_dtypes(include='object').columns:
     df[col] = le.fit_transform(df[col])
 
 ## 9. FEATURES & TARGET
 
-# Use a comprehensive set of features to predict Salary
 feature_columns = [
     'Age', 'AgeGroup', 'Attrition', 'BusinessTravel', 'DailyRate', 'Department',
     'DistanceFromHome', 'Education', 'EducationField', 'EnvironmentSatisfaction', 'Gender',
@@ -134,28 +118,27 @@ feature_columns = [
     'TrainingTimesLastYear', 'WorkLifeBalance', 'YearsAtCompany', 'YearsInCurrentRole',
     'YearsSinceLastPromotion', 'YearsWithCurrManager', 'Performance_Score'
 ]
+
 X = df[feature_columns]
 y = df['Salary']
 
-# Scale features (important step)
+# Scaling
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
 
-# Train-test split
+# Split
 X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+    X, y, test_size=0.2, random_state=42
 )
 
-## 10. LINEAR REGRESSION MODEL
-# A linear regression model is a statistical method used in machine learning to predict a continuous target variable ( Salary ) based on one or more predictor variables ( Features ) by fitting a straight line, defined as $\text{y = mx + b}$ or $\text{y = \beta_0 + \beta_1x_1 + \beta_2x_2 + ... + \beta_nx_n}$. It models relationships between features and a label by minimizing the squared differences between observed and predicted data points (residuals).
+## 10. MODEL
 
 model = LinearRegression()
 model.fit(X_train, y_train)
 
-# Predictions
 y_pred = model.predict(X_test)
 
-## 11. MODEL EVALUATION
+## 11. EVALUATION
 
 mse = mean_squared_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
@@ -166,15 +149,16 @@ print("R2 Score:", r2)
 
 ## 12. VISUALIZATION
 
-### Actual vs. Predicted Salary Plot
-
 plt.figure(figsize=(8, 6))
-plt.scatter(y_test, y_pred, alpha=0.6, label='Actual vs. Predicted')
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Perfect Prediction Line (y=x)')
+plt.scatter(y_test, y_pred, alpha=0.6)
+plt.plot(
+    [y_test.min(), y_test.max()],
+    [y_test.min(), y_test.max()],
+    'r--', lw=2
+)
 plt.title('Actual vs Predicted Salary')
 plt.xlabel('Actual Salary')
 plt.ylabel('Predicted Salary')
-plt.legend()
 plt.grid(True)
 plt.show()
 
@@ -182,6 +166,6 @@ plt.show()
 
 print("\n===== FINAL INSIGHTS =====")
 print("- Performance affects salary")
-print("- Outliers were detected using IQR method")
-print("- Outliers were removed to improve model accuracy")
-print("- Linear Regression used for prediction")
+print("- Outliers detected using IQR method")
+print("- Outliers removed to improve accuracy")
+print("- Linear Regression used")
